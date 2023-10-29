@@ -34,6 +34,13 @@ const getNotes = () =>
     headers: {
       'Content-Type': 'application/json'
     }
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`Failed to fetch notes. Status: ${response.status}`);
+    }
+    return response.json();
+  }).catch((error) => {
+    console.error('Error fetching notes:', error);
   });
 
 const saveNote = (note) =>
@@ -43,6 +50,13 @@ const saveNote = (note) =>
       'Content-Type': 'application/json'
     },
     body: JSON.stringify(note)
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`Failed to save the note. Status: ${response.status}`);
+    }
+    return response.json();
+  }).catch((error) => {
+    console.error('Error saving note:', error);
   });
 
 const deleteNote = (id) =>
@@ -51,6 +65,13 @@ const deleteNote = (id) =>
     headers: {
       'Content-Type': 'application/json'
     }
+  }).then((response) => {
+    if (!response.ok) {
+      throw new Error(`Failed to delete the note. Status: ${response.status}`);
+    }
+    return response.json();
+  }).catch((error) => {
+    console.error('Error deleting note:', error);
   });
 
 const renderActiveNote = () => {
@@ -129,12 +150,14 @@ const handleRenderBtns = () => {
 
 // Render the list of note titles
 const renderNoteList = async (notes) => {
-  let jsonNotes = await notes.json();
-  if (window.location.pathname === '/notes') {
-    noteList.forEach((el) => (el.innerHTML = ''));
-  }
+  try {
+    let jsonNotes = await notes.json();
+    if (window.location.pathname === '/notes') {
+      noteList.forEach((el) => (el.innerHTML = ''));
+    }
 
-  let noteListItems = [];
+    let noteListItems = [];
+
 
   // Returns HTML element with or without a delete button
   const createLi = (text, delBtn = true) => {
@@ -179,16 +202,27 @@ const renderNoteList = async (notes) => {
   if (window.location.pathname === '/notes') {
     noteListItems.forEach((note) => noteList[0].append(note));
   }
+} catch (error) {
+  console.error('Error parsing JSON:', error);
+}
 };
 
 // Gets notes from the db and renders them to the sidebar
-const getAndRenderNotes = () => getNotes().then(renderNoteList);
+const getAndRenderNotes = () => {
+  getNotes()
+    .then(renderNoteList)
+    .catch((error) => {
+      console.error('Error fetching notes:', error);
+      console.error('No notes found.');
+    });
+};
 
 if (window.location.pathname === '/notes') {
   saveNoteBtn.addEventListener('click', handleNoteSave);
   newNoteBtn.addEventListener('click', handleNewNoteView);
   clearBtn.addEventListener('click', renderActiveNote);
   noteForm.addEventListener('input', handleRenderBtns);
+} else {
+  console.error('No notes found.');
 }
-
 getAndRenderNotes();
